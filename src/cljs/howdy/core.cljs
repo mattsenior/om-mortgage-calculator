@@ -15,6 +15,3 @@
    (let [router (router/init routes app-state)
          target {:target (. js/document (getElementById "app"))}]
      (om/root router app-state target)))
-
-
-(enable-console-print!)

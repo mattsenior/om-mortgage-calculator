@@ -23,6 +23,8 @@
     (render [this]
       (html [:div
              [:a {:href "/"} "Home"]
+             [:a {:href "http://google.com/"} "G"]
+             [:a {:href "https://localhost:10555/"} "HTTPS"]
              [:p "Jobs"]
              [:a {:href "/job/1"} "Job 1"]]))))
 
@@ -31,7 +33,11 @@
   (reify
     om/IRender
     (render [this]
-      (html [:p "Job"]))))
+      (html [:div
+             [:a {:href "/"} "Home"]
+             [:a {:href "http://google.com/"} "G"]
+             [:a {:href "https://localhost:10555/"} "HTTPS"]
+             [:p "Job"]]))))
 
 (defn job-post
   [app owner]
