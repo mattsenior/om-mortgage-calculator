@@ -37,7 +37,8 @@
              [:a {:href "/"} "Home"]
              [:a {:href "http://google.com/"} "G"]
              [:a {:href "https://localhost:10555/"} "HTTPS"]
-             [:p "Job"]]))))
+             [:h1 "Job"]
+             [:p (:text app)]]))))
 
 (defn job-post
   [app owner]

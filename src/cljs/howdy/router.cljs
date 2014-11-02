@@ -1,5 +1,7 @@
 (ns howdy.router
-  (:require [om.core :as om]
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs.core.async :refer [<! put! chan]]
+            [om.core :as om]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [goog.events.EventType :as EventType]
@@ -8,11 +10,22 @@
   (:import goog.history.Html5History
            goog.Uri))
 
-(declare redirect!)
-
+;; Google History object
 (def history (Html5History.))
 
-(def current-uri (.parse Uri (.-href (.-location js/document))))
+;; Locations + redirecting
+(def locations (chan))
+
+(defn redirect!
+  "Helper for redirecting to given location"
+  [token]
+  (put! locations token))
+
+(go (while true
+      (let [token (<! locations)]
+        (.setToken history token))))
+
+(def ^:private current-uri (.parse Uri (.-href (.-location js/document))))
 
 (defn- find-href
   "Get the href from the target element, walking up
@@ -38,6 +51,11 @@
           (when (secretary/locate-route path)
             (.preventDefault e)
             (redirect! path)))))))
+
+;; Listen for href clicks
+(events/listen js/document
+                EventType/CLICK
+                handle-document-clicks)
 
 (defn- handle-route
   "Handle routes by swapping the view into the app
@@ -73,11 +91,6 @@
   ;; Activate history watching - immediately fires NAVIGATE
   (.setEnabled history true)
 
-  ;; Listen for href clicks
-  (events/listen js/document
-                  EventType/CLICK
-                  handle-document-clicks)
-
   ;; Return our root Om component, which renders the
   ;; current view which is stored in app-state under
   ;; [:router :view]
@@ -87,7 +100,3 @@
       (render [this]
         (om/build (get-in app [:router :view]) app)))))
 
-(defn redirect!
-  "Go to given location"
-  [location]
-  (.setToken history location))
