@@ -1,48 +1,51 @@
 (ns howdy.views
   (:require [om.core :as om :include-macros true]
+            [om.dom :as dom]
             [sablono.core :as html :refer-macros [html]]
-            [howdy.router :as router]))
+            [howdy.router :as router]
+            [howdy.routes :as routes]))
 
-(defn message
-  [m owner]
-  (reify
-    om/IRender
-    (render [this] (html [:li m]))))
-
-(defn message-list
+(defn nav
   [app owner]
   (reify
     om/IRender
     (render [this]
-      (html [:ol (om/build-all message (:messages app))])))) 
+      (html
+       [:ol
+        [:li [:a {:href "/"} "Home"]]
+        [:li [:a {:href "/mortgages"} "Mortgages"]]]))))
 
-(defn jobs
-  [app owner]
-  (reify
-    om/IRender
-    (render [this]
-      (html [:div
-             [:a {:href "/"} "Home"]
-             [:a {:href "http://google.com/"} "G"]
-             [:a {:href "https://localhost:10555/"} "HTTPS"]
-             [:p "Jobs"]
-             [:a {:href "/job/1"} "Job 1"]]))))
-
-(defn job
+;; Home
+(defn home
   [app owner]
   (reify
     om/IRender
     (render [this]
       (html [:div
-             [:a {:href "/"} "Home"]
-             [:a {:href "http://google.com/"} "G"]
-             [:a {:href "https://localhost:10555/"} "HTTPS"]
-             [:h1 "Job"]
-             [:p (:text app)]]))))
+             (om/build nav app)
+             [:h1 "Home"]]))))
 
-(defn job-post
-  [app owner]
+;; Mortgages
+
+(defn mortgages-li
+  [m _]
   (reify
+    om/IDisplayName
+    (display-name [_] "MortgagesLi")
     om/IRender
-    (render [this]
-      (html [:p "Job post"]))))
+    (render [_]
+      (html [:li "h"]))))
+
+(defn mortgages
+  [app _]
+  (reify
+    om/IDisplayName
+    (display-name [_] "Mortgages")
+    om/IRender
+    (render [_]
+      (html [:div
+              (om/build nav app)
+              [:h1 "Mortgages"]
+              [:ol
+               (om/build-all mortgages-li (:mortgages app) {:key :id})]]))))
+

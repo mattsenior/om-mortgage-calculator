@@ -57,27 +57,9 @@
                 EventType/CLICK
                 handle-document-clicks)
 
-(defn- handle-route
-  "Handle routes by swapping the view into the app
-  state as the [:router :view]"
-  [app view params]
-  (println params)
-  (swap! app assoc :router {:view view
-                            :params params}))
-
 (defn init
-  "Add Secretary routes, hook up history, and return
-   an Om component to use as root"
-  [routes app]
-
-  ;; Add routes and handlers to Secretary
-  (doseq [[route view] routes]
-    (secretary/add-route! route
-                          #(swap! app
-                                  assoc
-                                  :router
-                                  {:view view
-                                   :params %})))
+  "Hook up history, and return an Om component to use as root"
+  [app]
 
   ;; Add history event listener to dispatch!
   (events/listen history
@@ -96,6 +78,8 @@
   ;; [:router :view]
   (fn [app owner]
     (reify
+      om/IDisplayName
+      (display-name [_] "Root")
       om/IRender
       (render [this]
         (om/build (get-in app [:router :view]) app)))))
