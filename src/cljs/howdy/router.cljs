@@ -52,35 +52,25 @@
             (.preventDefault e)
             (redirect! path)))))))
 
-;; Listen for href clicks
-(events/listen js/document
-                EventType/CLICK
-                handle-document-clicks)
-
 (defn init
-  "Hook up history, and return an Om component to use as root"
-  [app]
+  "Add our handlers and fire the initial navigate event."
+  []
+  
+  ;; Listen for href clicks
+  (events/listen js/document
+                 EventType/CLICK
+                 handle-document-clicks)
+
 
   ;; Add history event listener to dispatch!
   (events/listen history
                  HistoryEventType/NAVIGATE
-                 #(secretary/dispatch! (.-token %)))
+                 (fn [e]
+                   (secretary/dispatch! (.-token e))))
 
   ;; Don’t use #
   (.setUseFragment history false)
   (.setPathPrefix history "")
 
   ;; Activate history watching - immediately fires NAVIGATE
-  (.setEnabled history true)
-
-  ;; Return our root Om component, which renders the
-  ;; current view which is stored in app-state under
-  ;; [:router :view]
-  (fn [app owner]
-    (reify
-      om/IDisplayName
-      (display-name [_] "Root")
-      om/IRender
-      (render [this]
-        (om/build (get-in app [:router :view]) app)))))
-
+  (.setEnabled history true))

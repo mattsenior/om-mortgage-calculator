@@ -1,12 +1,11 @@
 (ns howdy.core
   (:require [om.core :as om :include-macros true]
             [howdy.views :as views]
-            [howdy.router :as router]
-            [howdy.routes :as routes]))
+            [howdy.router :as router]))
 
 (def app-state
   (atom {:text "Howdy Mortgages"
-         :router {:view views/home}
+         :router {:page :home, :params {}}
          :mortgages [{:id 1
                       :name "A"
                       :startingBalance 250000}
@@ -15,6 +14,14 @@
                       :startingBalance 150000}]}))
 
 (defn main []
-   (let [router (router/init app-state)
-         target {:target (. js/document (getElementById "app"))}]
-     (om/root router app-state target)))
+  (let [target {:target (. js/document (getElementById "app"))}]
+    (om/root
+     (fn [app owner]
+       (reify
+         om/IDisplayName
+         (display-name [_] "Root")
+         om/IRender
+         (render [this]
+           (om/build (views/for-page (get-in app [:router :page])) app))))
+     app-state
+     target)))

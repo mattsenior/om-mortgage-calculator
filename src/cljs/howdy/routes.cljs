@@ -1,14 +1,15 @@
 (ns howdy.routes
   (:require [secretary.core :as secretary :refer-macros [defroute]]
-            [howdy.views :as views]
-            [howdy.core :refer [app-state]]))
+            [howdy.core :refer [app-state]]
+            [howdy.router :as router]))
 
-(defn- swap-view!
-  "Route handler to simply swap the chosen view into the
-  app state"
-  [app params view]
-  (swap! app assoc :router {:view view :params params}))
+(defn- set-page!
+  "Route handler to simply swap the chosen page in the app state"
+  [params page]
+  (swap! app-state assoc :router {:page page :params params}))
 
-(defroute home            "/"          {:as params} (swap-view! app-state params views/home))
-(defroute mortgages "/mortgages" {:as params} (swap-view! app-state params views/mortgages))
-(defroute mortgage "/mortgage" {:as params} (swap-view! app-state params views/mortgage))
+(defroute home      "/"              {:as params} (set-page! params :home))
+(defroute mortgages "/mortgages"     {:as params} (set-page! params :mortgages))
+(defroute mortgage  "/mortgages/:id" {:as params} (set-page! params :mortgage))
+
+(router/init)
