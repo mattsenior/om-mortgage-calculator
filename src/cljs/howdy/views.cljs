@@ -1,8 +1,10 @@
 (ns howdy.views
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom]
             [sablono.core :as html :refer-macros [html]]
-            [howdy.routes :as routes]))
+            [howdy.routes :as routes]
+            [cljs.core.async :refer [put! chan <!]]))
 
 (defn nav
   [app owner]
@@ -38,18 +40,35 @@
               {:href (routes/mortgage {:id (:id m)})}
               (:name m)]]))))
 
+(defn- new-mortgage
+  [mortgages]
+  {:id (inc (count mortgages))
+   :name "New Mortgage"
+   :startingBalance 150000})
+
 (defn mortgages
-  [app _]
+  [app owner]
   (reify
     om/IDisplayName
     (display-name [_] "Mortgages")
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_]
+      {:add-ch (chan)})
+    om/IWillMount
+    (will-mount [_]
+      (let [add-ch (om/get-state owner :add-ch)]
+        (go (while true
+              (let [_ (<! add-ch)]
+                (om/transact! app :mortgages
+                              (fn [ms] (conj ms (new-mortgage ms)))))))))
+    om/IRenderState
+    (render-state [_ {:keys [add-ch]}]
       (html [:div
-              (om/build nav app)
-              [:h1 "Mortgages"]
-              [:ol
-               (om/build-all mortgages-li (:mortgages app) {:key :id})]]))))
+             (om/build nav app)
+             [:h1 "Mortgages"]
+             [:ol
+              (om/build-all mortgages-li (:mortgages app) {:key :id})]
+             [:button {:on-click #(put! add-ch true)} "Add Mortgage"]]))))
 
 (defn mortgage
   [app _]
