@@ -4,6 +4,7 @@
             [om.dom :as dom]
             [sablono.core :as html :refer-macros [html]]
             [howdy.routes :as routes]
+            [howdy.router :refer [redirect!]]
             [cljs.core.async :refer [put! chan <!]]))
 
 ;; Abstract bits
@@ -18,22 +19,12 @@
   (om/set-state! owner :editing false)
   (cb text))
 
-(defn- on-edit [text]
-  (.log js/console (str "Edited to " text)))
-
 (defn- editable
   [data owner {:keys [edit-key on-edit element] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
       {:editing false})
-    om/IDidUpdate
-    (did-update [_ _ prev-state]
-      (when (and (om/get-state owner :editing)
-                 (not (:editing prev-state)))
-        (let [element (om/get-node owner "input")]
-          (.focus element)
-          (.setSelectionRange element 0 (.. element -value -length)))))
     om/IRenderState
     (render-state [_ {:keys [editing]}]
       (let [text (get data edit-key)]
@@ -51,7 +42,19 @@
                                   (when (== (.-keyCode e) 13)
                                     (end-edit text owner on-edit)))
                    :on-blur #(when (om/get-state owner :editing)
-                               (end-edit text owner on-edit))}]])))))
+                               (end-edit text owner on-edit))}]])))
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (om/get-state owner :editing)
+                 (not (:editing prev-state)))
+        (let [element (om/get-node owner "input")]
+          (.focus element)
+          (.setSelectionRange element 0 (.. element -value -length)))))))
+
+;; Handler
+
+(defn- on-edit [text]
+  (.log js/console (str "Edited to " text)))
 
 ;; Components
 
@@ -62,8 +65,8 @@
     (render [this]
       (html
        [:ol
-        [:li [:a {:href "/"} "Home"]]
-        [:li [:a {:href "/mortgages"} "Mortgages"]]]))))
+        [:li [:a {:href (routes/home)} "Home"]]
+        [:li [:a {:href (routes/mortgages)} "Mortgages"]]]))))
 
 ;; Home
 (defn home
@@ -123,6 +126,9 @@
   [app _]
   (let [m-id (js/parseInt (get-in app [:router :params :id]) 10)
         m (first (filter #(= (:id %) m-id) (:mortgages app)))]
+    ;; If we don’t have this id, we can redirect away
+    (when-not m
+      (redirect! (routes/mortgages)))
     (reify
       om/IDisplayName
       (display-name [_] "Mortgage")
