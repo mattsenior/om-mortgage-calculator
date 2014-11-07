@@ -6,6 +6,55 @@
             [howdy.routes :as routes]
             [cljs.core.async :refer [put! chan <!]]))
 
+;; Abstract bits
+
+(defn- display [show?]
+  (if show? {:color "green"} {:display "none"}))
+
+(defn- handle-change [e data edit-key owner]
+  (om/transact! data edit-key (fn [_] (.. e -target -value))))
+
+(defn- end-edit [text owner cb]
+  (om/set-state! owner :editing false)
+  (cb text))
+
+(defn- on-edit [text]
+  (.log js/console (str "Edited to " text)))
+
+(defn- editable
+  [data owner {:keys [edit-key on-edit] :as opts}]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:editing false})
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (om/get-state owner :editing)
+                 (not (:editing prev-state)))
+        (let [element (om/get-node owner "input")]
+          (.focus element)
+          (.setSelectionRange element 0 (.. element -value -length)))))
+    om/IRenderState
+    (render-state [_ {:keys [editing]}]
+      (let [text (get data edit-key)]
+        (html
+         [:h1
+          [:span {:style (display (not editing))
+                  :on-double-click (fn [e]
+                                     (.preventDefault e)
+                                     (om/set-state! owner :editing true))} text]
+          [:input {:style (display editing)
+                   :ref "input"
+                   :value text
+                   :on-change #(handle-change % data edit-key owner)
+                   :on-key-up (fn [e]
+                                  (when (== (.-keyCode e) 13)
+                                    (end-edit text owner on-edit)))
+                   :on-blur #(when (om/get-state owner :editing)
+                               (end-edit text owner on-edit))}]])))))
+
+;; Components
+
 (defn nav
   [app owner]
   (reify
@@ -81,7 +130,8 @@
       (render [_]
         (html [:div
                (om/build nav app)
-               [:h1 (:name m)]
+               (om/build editable m {:opts {:edit-key :name
+                                            :on-edit #(on-edit %)}})
                [:p (str "Starting balance: £" (:startingBalance m))]])))))
 
 (defn for-page
