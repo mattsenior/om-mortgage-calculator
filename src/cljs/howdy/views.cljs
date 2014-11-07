@@ -142,7 +142,7 @@
                [:p
                 [:span "Starting balance: £"]
                 (om/build editable m {:opts {:edit-key :startingBalance
-                                             :on-edit #(on-edit %)
+                                             :on-edit (fn [_] (om/transact! m :startingBalance (fn [s] (clojure.string/replace s #"[^\d]" ""))))
                                              :element :span}})]])))))
 
 (defn for-page
