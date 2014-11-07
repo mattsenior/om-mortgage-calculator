@@ -22,7 +22,7 @@
   (.log js/console (str "Edited to " text)))
 
 (defn- editable
-  [data owner {:keys [edit-key on-edit] :as opts}]
+  [data owner {:keys [edit-key on-edit element] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
@@ -38,7 +38,7 @@
     (render-state [_ {:keys [editing]}]
       (let [text (get data edit-key)]
         (html
-         [:h1
+         [element
           [:span {:style (display (not editing))
                   :on-double-click (fn [e]
                                      (.preventDefault e)
@@ -131,8 +131,13 @@
         (html [:div
                (om/build nav app)
                (om/build editable m {:opts {:edit-key :name
-                                            :on-edit #(on-edit %)}})
-               [:p (str "Starting balance: £" (:startingBalance m))]])))))
+                                            :on-edit #(on-edit %)
+                                            :element :h1}})
+               [:p
+                [:span "Starting balance: £"]
+                (om/build editable m {:opts {:edit-key :startingBalance
+                                             :on-edit #(on-edit %)
+                                             :element :span}})]])))))
 
 (defn for-page
   [page]
