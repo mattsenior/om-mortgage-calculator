@@ -32,7 +32,6 @@
          [element
           [:span {:style (display (not editing))
                   :on-double-click (fn [e]
-                                     (.preventDefault e)
                                      (om/set-state! owner :editing true))} text]
           [:input {:style (display editing)
                    :ref "input"
@@ -122,6 +121,12 @@
               (om/build-all mortgages-li (:mortgages app) {:key :id})]
              [:button {:on-click #(put! add-ch true)} "Add Mortgage"]]))))
 
+(defn- sanitise-currency
+  [input]
+  (-> input
+      (clojure.string/replace #"[^\d\.]" "")
+      (js/parseFloat)))
+
 (defn mortgage
   [app _]
   (let [m-id (js/parseInt (get-in app [:router :params :id]) 10)
@@ -142,7 +147,7 @@
                [:p
                 [:span "Starting balance: £"]
                 (om/build editable m {:opts {:edit-key :startingBalance
-                                             :on-edit (fn [_] (om/transact! m :startingBalance (fn [s] (clojure.string/replace s #"[^\d]" ""))))
+                                             :on-edit #(om/transact! m :startingBalance sanitise-currency)
                                              :element :span}})]])))))
 
 (defn for-page
