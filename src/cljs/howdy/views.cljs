@@ -109,9 +109,11 @@
     (will-mount [_]
       (let [add-ch (om/get-state owner :add-ch)]
         (go (while true
-              (let [_ (<! add-ch)]
+              (let [_ (<! add-ch)
+                    new-m (new-mortgage (:mortgages @app))]
                 (om/transact! app :mortgages
-                              (fn [ms] (conj ms (new-mortgage ms)))))))))
+                              (fn [ms] (conj ms new-m)))
+                (redirect! (routes/mortgage {:id (:id new-m)})))))))
     om/IRenderState
     (render-state [_ {:keys [add-ch]}]
       (html [:div
