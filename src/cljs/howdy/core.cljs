@@ -8,10 +8,25 @@
          :router {:page :home, :params {}}
          :mortgages [{:id 1
                       :name "A"
-                      :startingBalance 250000}
+                      :startBalance 250000
+                      :startYear 2014
+                      :startMonth 4
+                      :plans [{:id 1
+                               :name "Suggested"
+                               :values [{:year 0
+                                         :month 0
+                                         :interestRate 2.99
+                                         :regularPayment 1200
+                                         :oneOffPayment 0}
+                                        {:year 6
+                                         :month 1
+                                         :interestRate 5.99
+                                         :regularPayment 1500}]
+                               }] }
                      {:id 2
                       :name "B"
-                      :startingBalance 150000}]}))
+                      :startBalance 150000
+                      :plans []}]}))
 
 (defn main []
   (let [target {:target (. js/document (getElementById "app"))}]
