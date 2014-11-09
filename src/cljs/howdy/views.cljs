@@ -64,23 +64,10 @@
               (js/parseFloat))]
     (if (js/isNaN v) 0 v)))
 
-(defn- new-mortgage
-  [mortgages]
-  {:id (inc (count mortgages))
-   :name "New Mortgage"
-   :startBalance 150000
-   :plans []})
-
-(defn- new-plan
-  [plans]
-  {:id (inc (count plans))
-   :name "New Plan"
-   :values []})
-
 (defn- get-current-mortgage
   "Lookup current mortgage from router params"
   [app]
-  (let [id (js/parseInt (get-in app [:router :params :mortgageId]) 10)]
+  (let [id (get-in app [:router :params :mortgageId])]
     (->> (:mortgages app)
          (filter #(= (:id %) id))
          first)))
@@ -89,7 +76,7 @@
   "Lookup current plan from router params"
   [app]
   (let [m (get-current-mortgage app)
-        id (js/parseInt (get-in app [:router :params :planId]) 10)]
+        id (get-in app [:router :params :planId])]
     (->> (:plans m)
          (filter #(= (:id %) id))
          first)))
@@ -119,7 +106,7 @@
 ;; Mortgages
 
 (defn mortgages-li
-  [m _]
+  [m owner]
   (reify
     om/IDisplayName
     (display-name [_] "MortgagesLi")
@@ -128,25 +115,17 @@
       (html [:li
              [:a
               {:href (routes/mortgage {:mortgageId (:id m)})}
-              (:name m)]]))))
+              (:name m)]
+             [:button
+              {:on-click #(put! (:mortgage-control-ch (om/get-shared owner)) [:mortgages/delete @m])
+               :title (str "Delete " (:name m))}
+              "×"]]))))
 
 (defn mortgages
   [app owner]
   (reify
     om/IDisplayName
     (display-name [_] "Mortgages")
-    om/IInitState
-    (init-state [_]
-      {:add-ch (chan)})
-    om/IWillMount
-    (will-mount [_]
-      (let [add-ch (om/get-state owner :add-ch)]
-        (go (while true
-              (let [new-ch (<! add-ch)
-                    new-m (new-mortgage (:mortgages @app))]
-                (om/transact! app :mortgages
-                              (fn [ms] (conj ms new-m)))
-                (put! new-ch new-m))))))
     om/IRenderState
     (render-state [_ {:keys [add-ch]}]
       (html [:div
@@ -157,7 +136,7 @@
              [:button
               {:on-click (fn [_]
                            (let [new-ch (chan)]
-                             (put! add-ch new-ch)
+                             (put! (:mortgage-control-ch (om/get-shared owner)) [:mortgages/add new-ch])
                              (take! new-ch
                                     #(redirect! (routes/mortgage {:mortgageId (:id %)})))))}
               "Add Mortgage"]]))))
@@ -206,17 +185,17 @@
     (render-state [_ {:keys [add-ch]}]
       (html [:div
              [:ol
-              (om/build-all plans-li (:plans m) {:key :id, :opts {:mortgageId (:id m)}})]
+              (om/build-all plans-li (:plans m) {:key :id, :opts {:mortgage m}})]
              [:button
               {:on-click (fn [_]
                            (let [new-ch (chan)]
-                             (put! add-ch new-ch)
+                             (put! (:mortgage-control-ch (om/get-shared owner)) [:plans/add m new-ch])
                              (take! new-ch
                                     #(redirect! (routes/plan {:mortgageId (:id @m), :planId (:id %)})))))}
               "Add Plan"]]))))
 
 (defn plans-li
-  [p _ {:keys [mortgageId]}]
+  [p owner {m :mortgage}]
   (reify
     om/IDisplayName
     (display-name [_] "PlansLi")
@@ -224,8 +203,12 @@
     (render [_]
       (html [:li
              [:a
-              {:href (routes/plan {:mortgageId mortgageId, :planId (:id p)})}
-              (:name p)]]))))
+              {:href (routes/plan {:mortgageId (:id m), :planId (:id p)})}
+              (:name p)]
+             [:button
+              {:on-click #(put! (:mortgage-control-ch (om/get-shared owner)) [:plans/delete m @p])
+               :title (str "Delete " (:name p))}
+              "×"]]))))
 
 (defn plan
   [app _]

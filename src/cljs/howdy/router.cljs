@@ -10,19 +10,27 @@
   (:import goog.history.Html5History
            goog.Uri))
 
+;; Page changes channel and helper
+(def page-changes-ch (chan))
+
+(defn set-page!
+  "Route handler to simply swap the chosen page in the app state"
+  [params page]
+  (put! page-changes-ch {:page page :params params}))
+
 ;; Google History object
 (def history (Html5History.))
 
 ;; Locations + redirecting
-(def locations (chan))
+(def locations-ch (chan))
 
 (defn redirect!
   "Helper for redirecting to given location"
   [token]
-  (put! locations token))
+  (put! locations-ch token))
 
 (go (while true
-      (let [token (<! locations)]
+      (let [token (<! locations-ch)]
         (.setToken history token))))
 
 (def ^:private current-uri (.parse Uri (.-href (.-location js/document))))

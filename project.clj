@@ -20,7 +20,8 @@
                  [leiningen "2.5.0"]
                  [http-kit "2.1.19"]
                  [sablono "0.2.22"]
-                 [secretary "1.2.1"]]
+                 [secretary "1.2.1"]
+                 [cljs-uuid "0.0.4"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]
