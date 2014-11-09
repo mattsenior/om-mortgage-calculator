@@ -5,7 +5,7 @@
             [sablono.core :as html :refer-macros [html]]
             [howdy.routes :as routes]
             [howdy.router :refer [redirect!]]
-            [cljs.core.async :refer [put! chan <!]]))
+            [cljs.core.async :refer [put! take! chan <!]]))
 
 ;; Abstract bits
 
@@ -81,14 +81,18 @@
   "Lookup current mortgage from router params"
   [app]
   (let [id (js/parseInt (get-in app [:router :params :mortgageId]) 10)]
-    (first (filter #(= (:id %) id) (:mortgages app)))))
+    (->> (:mortgages app)
+         (filter #(= (:id %) id))
+         first)))
 
 (defn- get-current-plan
   "Lookup current plan from router params"
   [app]
   (let [m (get-current-mortgage app)
         id (js/parseInt (get-in app [:router :params :planId]) 10)]
-    (first (filter #(= (:id %) id) (:plans m)))))
+    (->> (:plans m)
+         (filter #(= (:id %) id))
+         first)))
 
 ;; Components
 
@@ -138,11 +142,11 @@
     (will-mount [_]
       (let [add-ch (om/get-state owner :add-ch)]
         (go (while true
-              (let [_ (<! add-ch)
+              (let [new-ch (<! add-ch)
                     new-m (new-mortgage (:mortgages @app))]
                 (om/transact! app :mortgages
                               (fn [ms] (conj ms new-m)))
-                (redirect! (routes/mortgage {:mortgageId (:id new-m)})))))))
+                (put! new-ch new-m))))))
     om/IRenderState
     (render-state [_ {:keys [add-ch]}]
       (html [:div
@@ -150,7 +154,13 @@
              [:h1 "Mortgages"]
              [:ol
               (om/build-all mortgages-li (:mortgages app) {:key :id})]
-             [:button {:on-click #(put! add-ch true)} "Add Mortgage"]]))))
+             [:button
+              {:on-click (fn [_]
+                           (let [new-ch (chan)]
+                             (put! add-ch new-ch)
+                             (take! new-ch
+                                    #(redirect! (routes/mortgage {:mortgageId (:id %)})))))}
+              "Add Mortgage"]]))))
 
 (defn mortgage
   [app _]
@@ -187,16 +197,23 @@
     (will-mount [_]
       (let [add-ch (om/get-state owner :add-ch)]
         (go (while true
-              (let [_ (<! add-ch)
+              (let [new-ch (<! add-ch)
                     new-p (new-plan (:plans @m))]
                 (om/transact! m :plans
-                              (fn [ps] (conj ps new-p))))))))
+                              (fn [ps] (conj ps new-p)))
+                (put! new-ch new-p))))))
     om/IRenderState
     (render-state [_ {:keys [add-ch]}]
       (html [:div
              [:ol
               (om/build-all plans-li (:plans m) {:key :id, :opts {:mortgageId (:id m)}})]
-             [:button {:on-click #(put! add-ch true)} "Add Plan"]]))))
+             [:button
+              {:on-click (fn [_]
+                           (let [new-ch (chan)]
+                             (put! add-ch new-ch)
+                             (take! new-ch
+                                    #(redirect! (routes/plan {:mortgageId (:id @m), :planId (:id %)})))))}
+              "Add Plan"]]))))
 
 (defn plans-li
   [p _ {:keys [mortgageId]}]
