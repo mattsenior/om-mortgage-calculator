@@ -234,6 +234,7 @@
                 (om/build editable m {:opts {:edit-key :startBalance
                                              :on-edit #(om/transact! m :startBalance sanitise-currency)
                                              :element :span}})]
+               (om/build plans m)
                (om/build editable p {:opts {:edit-key :name
                                             :on-edit #(on-edit %)
                                             :element :h1}})])))))
