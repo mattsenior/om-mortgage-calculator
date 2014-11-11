@@ -251,9 +251,8 @@
 
 
 
-(def a [{:year 0, :month 0, :interest-rate 2.99, :regular-payment 100, :one-off-payment 0}
-        {:year 1, :month 0,                      :regular-payment 200, :one-off-payment 1000 }
-        {:year 1, :month 6, :interest-rate 5.99, :regular-payment 300}])
+(def a [{:year 0, :month 0, :interest-rate 2.99, :regular-payment 1188.23, :one-off-payment 0}
+        {:year 5, :month 0, :interest-rate 5.99, :regular-payment 1535.11}])
 
 (defn- calculate-total-months
   [{:keys [year month]}]
@@ -292,7 +291,10 @@
 
 (def f (drop 1 (reductions (fn [prev this]
                              (let [prev-total-debt        (:total-debt prev)
-                                   month-interest-charged 50
+                                   ;; Get the interest rate for this month as a percentage, e.g. 2.99
+                                   interest-rate          (get-in this [:values :interest-rate])
+                                   ;; Calculate the interest charged - NB months are even 12ths of a year
+                                   month-interest-charged (* prev-total-debt (/ interest-rate 100 12))
                                    ;; Add up regular + one-off repayments this month
                                    month-paid             (+ (get-in this [:values :regular-payment] 0)
                                                              (get-in this [:values :one-off-payment] 0))
@@ -309,11 +311,11 @@
                                        :total-paid             (+ (:total-paid prev) month-paid)
                                        :total-interest-charged (+ (:total-interest-charged prev) month-interest-charged)
                                        :total-debt-repaid      (+ (:total-debt-repaid prev) month-debt-repaid)})))
-                           {:total-debt             250005
+                           {:total-debt             250845
                             :total-paid             0
                             :total-interest-charged 0
                             :total-debt-repaid      0}
                            e)))
 
-(doseq [v (take-while #(pos? (:prev-total-debt %)) f)]
+(doseq [v (take-while #(pos? (:prev-total-debt %)) (take 2400 f))]
   (.log js/console (pr-str v)))
