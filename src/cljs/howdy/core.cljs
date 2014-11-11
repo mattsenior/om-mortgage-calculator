@@ -12,30 +12,30 @@
          :router {:page :home, :params {}}
          :mortgages [{:id (str (uuid/make-random))
                       :name "A"
-                      :startBalance 250000
-                      :startYear 2014
-                      :startMonth 4
+                      :start-balance 250000
+                      :start-year 2014
+                      :start-month 4
                       :plans [{:id (str (uuid/make-random))
                                :name "Suggested"
                                :values [{:year 0
                                          :month 0
-                                         :interestRate 2.99
-                                         :regularPayment 1200
-                                         :oneOffPayment 0}
+                                         :interest-rate 2.99
+                                         :regular-payment 1200
+                                         :one-off-payment 0}
                                         {:year 6
                                          :month 1
-                                         :interestRate 5.99
-                                         :regularPayment 1500}]
+                                         :interest-rate 5.99
+                                         :regular-payment 1500}]
                                }] }
                      {:id (str (uuid/make-random))
                       :name "B"
-                      :startBalance 150000
+                      :start-balance 150000
                       :plans []}]}))
 
 (defn- new-mortgage []
   {:id (str (uuid/make-random))
    :name "New Mortgage"
-   :startBalance 150000
+   :start-balance 150000
    :plans []})
 
 (defn- new-plan
