@@ -6,6 +6,9 @@
   (+ month (* 12 year)))
 
 
+(defn get-mortgage-lifespan
+  [m p]
+  )
 
 
 
