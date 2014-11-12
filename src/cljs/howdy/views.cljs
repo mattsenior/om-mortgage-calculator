@@ -5,6 +5,7 @@
             [sablono.core :as html :refer-macros [html]]
             [howdy.routes :as routes]
             [howdy.router :refer [redirect!]]
+            [howdy.mortgage :as mortgage]
             [cljs.core.async :refer [put! take! chan <!]]))
 
 ;; Abstract bits
@@ -246,76 +247,3 @@
     :mortgages mortgages
     :mortgage  mortgage
     :plan      plan))
-
-
-
-
-
-(def a [{:year 0, :month 0, :interest-rate 2.99, :regular-payment 1188.23, :one-off-payment 0}
-        {:year 5, :month 0, :interest-rate 5.99, :regular-payment 1535.11}])
-
-(defn- calculate-total-months
-  [{:keys [year month]}]
-  (+ month (* 12 year)))
-
-(.log js/console (pr-str a))
-
-(def b (map #(assoc % :total-month (calculate-total-months %)) a))
-
-(.log js/console (pr-str b))
-
-
-(def c (mapcat (fn
-                 [prev this next]
-                 (let [this-with-cascades-from-prev (if prev (merge (select-keys prev [:interest-rate :regular-payment]) this) this)
-                       first-month this-with-cascades-from-prev 
-                       rest-months (dissoc first-month :one-off-payment)
-                       total-months (- (:total-month next) (:total-month this))]
-                   (if (pos? total-months)
-                     (conj (repeat (dec total-months) rest-months) first-month)
-                     [])))
-               (conj b nil)
-               b
-               (rest b)))
-
-(.log js/console (pr-str c))
-
-(def d (concat c (repeat (last b))))
-
-(.log js/console (pr-str (take 30 d)))
-
-(def e (map (fn [month-number values] {:month-number month-number :values values}) (drop 1 (range)) d))
-
-(doseq [v (take 24 e)]
-  (.log js/console (pr-str v)))
-
-(def f (drop 1 (reductions (fn [prev this]
-                             (let [prev-total-debt        (:total-debt prev)
-                                   ;; Get the interest rate for this month as a percentage, e.g. 2.99
-                                   interest-rate          (get-in this [:values :interest-rate])
-                                   ;; Calculate the interest charged - NB months are even 12ths of a year
-                                   month-interest-charged (* prev-total-debt (/ interest-rate 100 12))
-                                   ;; Add up regular + one-off repayments this month
-                                   month-paid             (+ (get-in this [:values :regular-payment] 0)
-                                                             (get-in this [:values :one-off-payment] 0))
-                                   ;; Prevent overpayment by reducing month-paid
-                                   month-paid             (min (+ prev-total-debt month-interest-charged) month-paid)
-                                   ;; Calculate how much debt was repaid
-                                   month-debt-repaid      (- month-paid month-interest-charged)]
-                               (merge this
-                                      {:prev-total-debt        prev-total-debt
-                                       :month-interest-charged month-interest-charged
-                                       :month-paid             month-paid
-                                       :month-debt-repaid      month-debt-repaid
-                                       :total-debt             (- prev-total-debt month-debt-repaid)
-                                       :total-paid             (+ (:total-paid prev) month-paid)
-                                       :total-interest-charged (+ (:total-interest-charged prev) month-interest-charged)
-                                       :total-debt-repaid      (+ (:total-debt-repaid prev) month-debt-repaid)})))
-                           {:total-debt             250845
-                            :total-paid             0
-                            :total-interest-charged 0
-                            :total-debt-repaid      0}
-                           e)))
-
-(doseq [v (take-while #(pos? (:prev-total-debt %)) (take 2400 f))]
-  (.log js/console (pr-str v)))
