@@ -51,30 +51,31 @@
               :total-paid             0
               :total-interest-charged 0
               :total-debt-repaid      0}
-        totals (reductions (fn [prev this]
-                        (let [prev-total-debt        (:total-debt prev)
-                              ;; Get the interest rate for this month as a percentage, e.g. 2.99
-                              interest-rate          (get-in this [:values :interest-rate])
-                              ;; Calculate the interest charged - NB months are even 12ths of a year
-                              month-interest-charged (* prev-total-debt (/ interest-rate 100 12))
-                              ;; Add up regular + one-off repayments this month
-                              month-paid             (+ (get-in this [:values :regular-payment] 0)
-                                                        (get-in this [:values :one-off-payment] 0))
-                              ;; Prevent overpayment by reducing month-paid
-                              month-paid             (min (+ prev-total-debt month-interest-charged) month-paid)
-                              ;; Calculate how much debt was repaid
-                              month-debt-repaid      (- month-paid month-interest-charged)]
-                          (merge this
-                                 {:prev-total-debt        prev-total-debt
-                                  :month-interest-charged month-interest-charged
-                                  :month-paid             month-paid
-                                  :month-debt-repaid      month-debt-repaid
-                                  :total-debt             (- prev-total-debt month-debt-repaid)
-                                  :total-paid             (+ (:total-paid prev) month-paid)
-                                  :total-interest-charged (+ (:total-interest-charged prev) month-interest-charged)
-                                  :total-debt-repaid      (+ (:total-debt-repaid prev) month-debt-repaid)})))
-                      init
-                      month-values)
+        totals (reductions
+                (fn [prev this]
+                  (let [prev-total-debt        (:total-debt prev)
+                        ;; Get the interest rate for this month as a percentage, e.g. 2.99
+                        interest-rate          (get-in this [:values :interest-rate])
+                        ;; Calculate the interest charged - NB months are even 12ths of a year
+                        month-interest-charged (* prev-total-debt (/ interest-rate 100 12))
+                        ;; Add up regular + one-off repayments this month
+                        month-paid             (+ (get-in this [:values :regular-payment] 0)
+                                                  (get-in this [:values :one-off-payment] 0))
+                        ;; Prevent overpayment by reducing month-paid
+                        month-paid             (min (+ prev-total-debt month-interest-charged) month-paid)
+                        ;; Calculate how much debt was repaid
+                        month-debt-repaid      (- month-paid month-interest-charged)]
+                    (merge this
+                           {:prev-total-debt        prev-total-debt
+                            :month-interest-charged month-interest-charged
+                            :month-paid             month-paid
+                            :month-debt-repaid      month-debt-repaid
+                            :total-debt             (- prev-total-debt month-debt-repaid)
+                            :total-paid             (+ (:total-paid prev) month-paid)
+                            :total-interest-charged (+ (:total-interest-charged prev) month-interest-charged)
+                            :total-debt-repaid      (+ (:total-debt-repaid prev) month-debt-repaid)})))
+                init
+                month-values)
         totals (->> totals
                     (drop 1)
                     (take 2400)
@@ -88,5 +89,4 @@
        assoc-cascaded-values
        expand-months
        assoc-month-numbers
-       (apply-interest-and-repayments (:start-balance m))
-       ))
+       (apply-interest-and-repayments (:start-balance m))))
