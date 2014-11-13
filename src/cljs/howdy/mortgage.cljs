@@ -48,9 +48,9 @@
 (defn- apply-interest-and-repayments
   [start-debt month-values]
   (let [init {:total-debt             start-debt
-                     :total-paid             0
-                     :total-interest-charged 0
-                     :total-debt-repaid      0}
+              :total-paid             0
+              :total-interest-charged 0
+              :total-debt-repaid      0}
         totals (reductions (fn [prev this]
                         (let [prev-total-debt        (:total-debt prev)
                               ;; Get the interest rate for this month as a percentage, e.g. 2.99
