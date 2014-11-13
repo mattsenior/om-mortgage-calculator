@@ -5,7 +5,7 @@
             [sablono.core :as html :refer-macros [html]]
             [howdy.routes :as routes]
             [howdy.router :refer [redirect!]]
-            [howdy.mortgage :as mortgage]
+            [howdy.mortgage :refer [get-mortgage-lifespan]]
             [cljs.core.async :refer [put! take! chan <!]]))
 
 ;; Abstract bits
@@ -238,7 +238,20 @@
                (om/build plans m)
                (om/build editable p {:opts {:edit-key :name
                                             :on-edit #(on-edit %)
-                                            :element :h2}})])))))
+                                            :element :h2}})
+               (let [ml (get-mortgage-lifespan m p)
+                     filtered-ml (filter #(zero? (mod (:month-number %) 8)) ml)
+                     stats (last ml)]
+                 [:div
+                  [:p (str "Total paid: £" (:total-paid stats))]
+                  [:p (str "Months: " (:month-number stats))]
+                  (map (fn [{:keys [month-number total-debt] :as month}]
+                         [:div {:key month-number
+                                :style {:width (str (* 50 (/ total-debt (:start-balance m))) "%")
+                                        :height "10px"
+                                        :background-color "gold"}}
+                          ])
+                       filtered-ml)])])))))
 
 (defn for-page
   [page]

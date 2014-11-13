@@ -11,24 +11,34 @@
   (atom {:text "Howdy Mortgages"
          :router {:page :home, :params {}}
          :mortgages [{:id (str (uuid/make-random))
-                      :name "A"
+                      :name "Mortgage A"
                       :start-balance 250000
                       :start-year 2014
                       :start-month 4
                       :plans [{:id (str (uuid/make-random))
                                :name "Suggested"
-                               :values [{:year 0
-                                         :month 0
+                               :values [{:year 1
+                                         :month 1
                                          :interest-rate 2.99
-                                         :regular-payment 1200
+                                         :regular-payment 1188.23
                                          :one-off-payment 0}
                                         {:year 6
                                          :month 1
                                          :interest-rate 5.99
-                                         :regular-payment 1500}]
-                               }] }
+                                         :regular-payment 1535.11}]}
+                              {:id (str (uuid/make-random))
+                               :name "Overpayment"
+                               :values [{:year 1
+                                         :month 1
+                                         :interest-rate 2.99
+                                         :regular-payment 2400
+                                         :one-off-payment 0}
+                                        {:year 6
+                                         :month 1
+                                         :interest-rate 8
+                                         :regular-payment 1400}]}]}
                      {:id (str (uuid/make-random))
-                      :name "B"
+                      :name "Mortgage B"
                       :start-balance 150000
                       :plans []}]}))
 

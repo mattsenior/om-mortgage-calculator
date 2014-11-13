@@ -1,20 +1,10 @@
 (ns howdy.mortgage)
 
 (defn- calculate-total-months
-  "Get total month count for given number of years and months"
+  "Get total month count for given number of years and months
+  E.g. Year 1 month 1 = 1; Year 1 month 2 = 2; Year 2 month 1 = 13"
   [{:keys [year month]}]
-  (+ month (* 12 year)))
-
-
-(defn get-mortgage-lifespan
-  [m p]
-  )
-
-
-
-(def a [{:year 0, :month 0, :interest-rate 2.99, :regular-payment 1188.23, :one-off-payment 0}
-        {:year 1, :month 0,  :regular-payment 1535.11, :one-off-payment 100}
-        {:year 2, :month 0, :interest-rate 5.99, :regular-payment 1535.11}])
+  (+ month (* 12 (dec year))))
 
 (defn- assoc-total-months
   "Calculate and assoc :total-month key in each map in the coll"
@@ -29,8 +19,12 @@
 
 (defn- expand-single-value-map
   "Repeat the given map n times (or inf), and dissoc :one-off-payment
-  from all but the first one"
-  ([x] (cons x (repeat (dissoc x :one-off-payment))))
+  from all but the first one. Also dissoc some unnecessary keys."
+  ([x] (cons x (repeat (dissoc x
+                               :one-off-payment
+                               :year
+                               :month
+                               :total-month))))
   ([x n] (take n (expand-single-value-map x))))
 
 (defn- expand-months
@@ -87,10 +81,12 @@
                     (take-while #(pos? (:prev-total-debt %))))]
     totals))
 
-(doseq [v (->> a
-               assoc-total-months
-               assoc-cascaded-values
-               expand-months
-               assoc-month-numbers
-               (apply-interest-and-repayments 250845))]
-  (.log js/console (pr-str v)))
+(defn get-mortgage-lifespan
+  [m p]
+  (->> (:values p)
+       assoc-total-months
+       assoc-cascaded-values
+       expand-months
+       assoc-month-numbers
+       (apply-interest-and-repayments (:start-balance m))
+       ))
