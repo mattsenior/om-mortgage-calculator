@@ -5,42 +5,13 @@
             [howdy.views :as views]
             [howdy.router :as router]
             [cljs.core.async :refer [put! chan <!]]
-            [cljs-uuid.core :as uuid]))
+            [cljs-uuid.core :as uuid]
+            [om-sync.util :refer [edn-xhr]]))
 
 (def app-state
   (atom {:text "Howdy Mortgages"
          :router {:page :home, :params {}}
-         :mortgages [{:id (str (uuid/make-random))
-                      :name "Mortgage A"
-                      :start-balance 250000
-                      :start-year 2014
-                      :start-month 4
-                      :plans [{:id (str (uuid/make-random))
-                               :name "Suggested"
-                               :values [{:year 1
-                                         :month 1
-                                         :interest-rate 2.99
-                                         :regular-payment 1188.23
-                                         :one-off-payment 0}
-                                        {:year 6
-                                         :month 1
-                                         :interest-rate 5.99
-                                         :regular-payment 1535.11}]}
-                              {:id (str (uuid/make-random))
-                               :name "Overpayment"
-                               :values [{:year 1
-                                         :month 1
-                                         :interest-rate 2.99
-                                         :regular-payment 2400
-                                         :one-off-payment 0}
-                                        {:year 6
-                                         :month 1
-                                         :interest-rate 8
-                                         :regular-payment 1400}]}]}
-                     {:id (str (uuid/make-random))
-                      :name "Mortgage B"
-                      :start-balance 150000
-                      :plans []}]}))
+         :mortgages []}))
 
 (defn- new-mortgage []
   {:id (str (uuid/make-random))
@@ -53,6 +24,13 @@
   {:id (str (uuid/make-random))
    :name "New Plan"
    :values []})
+
+(edn-xhr {:method :get
+          :url "/mortgages/new"
+          :on-complete (fn [res]
+                         (.log js/console (pr-str res))
+                         (reset! app-state res)
+                         )})
 
 (defn main []
   (let [mortgage-control-ch (chan)]
