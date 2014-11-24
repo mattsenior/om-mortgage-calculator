@@ -1,5 +1,5 @@
 (ns howdy.router
-  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [<! put! chan]]
             [om.core :as om]
             [goog.events :as events]
@@ -29,9 +29,10 @@
   [token]
   (put! locations-ch token))
 
-(go (while true
-      (let [token (<! locations-ch)]
-        (.setToken history token))))
+(go-loop [] 
+  (let [token (<! locations-ch)]
+    (.setToken history token))
+  (recur))
 
 (def ^:private current-uri (.parse Uri (.-href (.-location js/document))))
 

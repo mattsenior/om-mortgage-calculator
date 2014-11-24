@@ -1,7 +1,7 @@
 (ns howdy.server
   (:require [clojure.java.io :as io]
             [howdy.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
-            [compojure.core :refer [GET defroutes]]
+            [compojure.core :refer [GET POST defroutes]]
             [compojure.route :refer [resources]]
             [compojure.handler :refer [api]]
             [net.cgrand.enlive-html :refer [deftemplate]]
@@ -9,53 +9,29 @@
             [environ.core :refer [env]]
             [org.httpkit.server :refer [run-server]]
             [cljs-uuid.core :as uuid]
-            ))
+            [taoensso.sente :as sente]))
 
 (deftemplate page
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
 
-(defn generate-response [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/edn"}
-   :body (pr-str data)})
+(let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
+              connected-uids]}
+      (sente/make-channel-socket! {})]
+  (def ring-ajax-post                ajax-post-fn)
+  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
+  (def ch-chsk                       ch-recv)         ;; ChannelSocket’s receive channel
+  (def chsk-send!                    send-fn)         ;; ChannelSocket’s send API fn
+  (def connected-uids                connected-uids)) ;; Watchable, read-only atom
 
 (defroutes routes
   (resources "/")
   (resources "/react" {:root "react"})
-  (GET "/mortgages/new" []
-       (generate-response {:text "Howdy Mortgages"
-         :router {:page :home, :params {}}
-         :mortgages [{:id (str (uuid/make-random))
-                      :name "Mortgage A"
-                      :start-balance 250000
-                      :start-year 2014
-                      :start-month 4
-                      :plans [{:id (str (uuid/make-random))
-                               :name "Suggested"
-                               :values [{:year 1
-                                         :month 1
-                                         :interest-rate 2.99
-                                         :regular-payment 1188.23
-                                         :one-off-payment 0}
-                                        {:year 6
-                                         :month 1
-                                         :interest-rate 5.99
-                                         :regular-payment 1535.11}]}
-                              {:id (str (uuid/make-random))
-                               :name "Overpayment"
-                               :values [{:year 1
-                                         :month 1
-                                         :interest-rate 2.99
-                                         :regular-payment 2400
-                                         :one-off-payment 0}
-                                        {:year 6
-                                         :month 1
-                                         :interest-rate 8
-                                         :regular-payment 1400}]}]}
-                     {:id (str (uuid/make-random))
-                      :name "Mortgage B"
-                      :start-balance 150000
-                      :plans []}]}))
+
+  ;; Sente routes
+  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
+  (POST "/chsk" req (ring-ajax-post                req))
+
+  ;; All others
   (GET "/*" req (page)))
 
 (def http-handler

@@ -1,5 +1,14 @@
 (ns howdy.mortgage)
 
+;; Mortgage helper functions
+
+(defn get-plan-from-plans
+  "Get plan from plans"
+  [id plans]
+  (first (filter #(= (:id %) id) plans)))
+
+;; Steps for generating the mortgage lifespan
+
 (defn- calculate-total-months
   "Get total month count for given number of years and months
   E.g. Year 1 month 1 = 1; Year 1 month 2 = 2; Year 2 month 1 = 13"

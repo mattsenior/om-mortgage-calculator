@@ -6,22 +6,33 @@
 
   :source-paths ["src/clj" "src/cljs"]
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [;; Core
+                 [org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2371" :scope "provided"]
+                 [leiningen "2.5.0"]
+
+                 ;; Shared
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [com.taoensso/sente "1.2.0"]
+                 [cljs-uuid "0.0.4"]
+
+                 ;; Server
                  [ring "1.3.1"]
                  [compojure "1.2.0"]
-                 [enlive "1.1.5"]
-                 [om "0.7.3"]
-                 [figwheel "0.1.4-SNAPSHOT"]
-                 [environ "1.0.0"]
-                 [com.cemerick/piggieback "0.1.3"]
-                 [weasel "0.4.0-SNAPSHOT"]
-                 [leiningen "2.5.0"]
                  [http-kit "2.1.19"]
+
+                 ;; Client
+                 [om "0.7.3"]
                  [sablono "0.2.22"]
                  [secretary "1.2.1"]
-                 [cljs-uuid "0.0.4"]]
+                 [com.andrewmcveigh/cljs-time "0.2.4"]
+
+                 ;; Dev env
+                 [environ "1.0.0"]
+                 [figwheel "0.1.4-SNAPSHOT"]
+                 [com.cemerick/piggieback "0.1.3"]
+                 [enlive "1.1.5"]
+                 [weasel "0.4.0-SNAPSHOT"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]
