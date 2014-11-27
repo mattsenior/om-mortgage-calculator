@@ -6,7 +6,8 @@
             [goog.history.EventType :as HistoryEventType]
             [goog.events.EventType :as EventType]
             [secretary.core :as secretary]
-            [sablono.core :refer-macros [html]])
+            [sablono.core :refer-macros [html]]
+            [howdy.flux :refer [flux]])
   (:import goog.history.Html5History
            goog.Uri))
 
